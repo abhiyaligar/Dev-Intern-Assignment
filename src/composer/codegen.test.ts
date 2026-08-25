@@ -97,6 +97,19 @@ export function QuickActionsScreen() {
     expect(jsx).toContain('session={{ ...SAMPLE_SESSION, soc: 64, kw: 187 }}');
     expect(jsx).toContain("import { SAMPLE_SESSION } from '../components/data';");
   });
+  
+  it('imports fixtures from their own modules when a screen mixes sources', () => {
+    const data: Data = {
+      content: [
+        { type: 'PricingTable', props: { id: 'pt', showMember: true, idleFeePerMin: 0.4, notes: true } },
+        { type: 'StationListCard', props: { id: 'c', station: 0, variant: 'default' } },
+      ],
+      root: { props: {} },
+    };
+    const jsx = puckDataToJsxVolt(data, 'Mixed fixtures');
+    expect(jsx).toContain("import { SAMPLE_PRICE_BANDS, SAMPLE_STATIONS } from '../components/data';");
+    expect(jsx).toContain("import { SAMPLE_TARIFF_NOTES } from '../components/tariffs';");
+  });
 
   it('throws on unknown component types', () => {
     const data: Data = {

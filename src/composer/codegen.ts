@@ -168,10 +168,16 @@ export function puckDataToJsx(
     if (hit.length) imports.push(`import { ${hit.join(', ')} } from '${source}';`);
   }
   const fixtureNames = [...ctx.fixtures].sort();
-  if (fixtureNames.length) {
-    imports.push(
-      `import { ${fixtureNames.join(', ')} } from '${pack.fixtures[fixtureNames[0]]}';`,
-    );
+  const bySource = new Map<string, string[]>();
+  for (const name of fixtureNames) {
+    const source = pack.fixtures[name];
+    if (!source) throw new Error(`No fixture module mapped for "${name}"`);
+      const group = bySource.get(source);
+    if (group) group.push(name);
+    else bySource.set(source, [name]);
+  }
+  for (const [source, names] of [...bySource.entries()].sort()) {
+    imports.push(`import { ${names.join(', ')} } from '${source}';`);
   }
 
   const body =
