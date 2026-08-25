@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { cssVarName, emitLayer, mergeEmitted, resolveTokenValue } from './emit';
 import { GLOBAL_TOKENS } from './global';
 import type { TokenLayerDef } from './types';
+import { buildSemanticTokens } from './brand';
 
 describe('cssVarName', () => {
   it('maps dot paths to --ev- prefixed names', () => {
@@ -68,9 +69,28 @@ describe('mergeEmitted', () => {
     });
     expect(mergeEmitted(a, b).base['--ev-x-y']).toBe('second');
   });
+  it('brand layer overrides global primitives for shared token names', () => {
+    const semantic = buildSemanticTokens({
+      name: 'Sand',
+      accentHex: '#e07a3f',
+      grayTint: 'sand',
+      radius: 'medium',
+      scaling: 1,
+      fontFamily: 'system-ui',
+      panelStyle: 'solid',
+    });
+    const emitted = mergeEmitted(
+      ...[GLOBAL_TOKENS, semantic].map(emitLayer),
+    );
+    const expected = emitLayer(semantic).light['--ev-gray-11'];
+    expect(emitted.light['--ev-gray-11']).toBe(expected);
+    expect(emitLayer(GLOBAL_TOKENS).light['--ev-gray-11']).not.toBe(expected);
+  });
 });
 
+
 describe('resolveTokenValue', () => {
+  
   const global: TokenLayerDef = {
     layer: 'global',
     tokens: [
