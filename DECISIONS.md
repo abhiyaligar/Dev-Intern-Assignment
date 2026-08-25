@@ -6,37 +6,69 @@ Do not ask an AI agent to draft this file. Short, plain, imperfect writing is
 preferred over polished generic text. We may ask you about any answer here
 during review.
 
-## Issue 1 
-
 ## 1. What I changed
 
-reorder [semantic, global, ...extraLayers] → [globalTokens, semantic, ...extraLayers] at ThemeProvider.tsx:89.
+### Issue 1:
 
+```
+reorder [semantic, global, ...extraLayers] → [globalTokens, semantic, ...extraLayers] at ThemeProvider.tsx:89.
+```
+
+### Issue 2:
+
+```
+.ev-station-card--selected {
+  box-shadow: var(--ev-shadow-3), inset 0 0 0 2px var(--ev-card-selected-boder) -> var(--ev-card-selected-border) ;
+} src/components/molecules/molecules.css:66:
+```
 ## 2. Evidence I used
 
-List the files, tests or commands that convinced you what the correct behavior
-should be.
+### Issue 1:
 
+```
 | File or command | What I learned |
 |src/tokens/emit.ts,|mergeEmitted uses Object.assign → later layers overwrite earlier ones|
 |src/tokens/global.ts|global layer emits fixed Radix gray.* — the only collision with semantic|
 |DevTools computed styles| --ev-gray-11 identical across tints = values clobbered after emission | 
+```
+
 
 ## 3. A suggestion I rejected or narrowed
 
-deleting gray.* from GLOBAL_TOKENS, or special-casing gray in the merge. Why rejected: the docs define precedence as component → brand → primitive, so the general fix is restoring that order; deleting globals would break alias targets/DTCG export and restructures the token system (forbidden by the task).
+### Issue 1:
+
+- deleting gray.* from GLOBAL_TOKENS, or special-casing gray in the merge. Why rejected: the docs define precedence as component → brand → primitive, so the general fix is restoring that order; deleting globals would break alias targets/DTCG export and restructures the token system (forbidden by the task).
+
+### Issue 2:
+
+Nothing because there was simple typo 
 
 ## 4. Verification
 
-npm run dev -> playground → brand panel → dark theme -> cycle Gray tints -> backgrounds/text/borders shift per tint; DevTools shows --ev-gray-11 change (e.g. #b4b4b4 → #b4b2be)
+### Issue 1:
+* npm run dev -> playground → brand panel → dark theme -> cycle Gray tints -> backgrounds/text/borders shift per tint; DevTools shows --ev-gray-11 change (e.g. #b4b4b4 → #b4b2be)
+
+### Issue 2:
+
+npm run dev -> Components tab → Molecules → StationListCard
 
 ## 5. Remaining risk
+### Issue 1:
+* I'd next test the two Atlas libraries' themes after the layer reorder. My fix changes precedence for every overlapping var name across all three libraries, not just gray in Volt. I verified Volt's grays visually, but atlas-web/tokens/global.ts and atlas-charge/tokens/global.ts define their own token sets — if either library intentionally overrides a semantic-level name at the global layer expecting to win, my reorder flips that behavior. I checked the obvious gray collision but didn't diff every overlapping name across all three libraries
 
-I'd next test the two Atlas libraries' themes after the layer reorder. My fix changes precedence for every overlapping var name across all three libraries, not just gray in Volt. I verified Volt's grays visually, but atlas-web/tokens/global.ts and atlas-charge/tokens/global.ts define their own token sets — if either library intentionally overrides a semantic-level name at the global layer expecting to win, my reorder flips that behavior. I checked the obvious gray collision but didn't diff every overlapping name across all three libraries
+### Issue 2:
+
+None
+
 
 ## 6. How I directed the investigation
+### Issue 1:
+* First I looked where grayTint is handled — ThemePanel and brand.ts. All correct, so I traced where the value gets lost on its way to CSS: the layer array in ThemeProvider and mergeEmitted. global.ts emits fixed gray.* tokens, emit.ts merges last-wins, and the provider put semantic first — so brand grays got clobbered. Only gray existed in both layers, matching 'only gray broke'.
 
-First I looked where grayTint is handled — ThemePanel and brand.ts. All correct, so I traced where the value gets lost on its way to CSS: the layer array in ThemeProvider and mergeEmitted. global.ts emits fixed gray.* tokens, emit.ts merges last-wins, and the provider put semantic first — so brand grays got clobbered. Only gray existed in both layers, matching 'only gray broke'.
+### Issue 2:
+
+* First I used the devtools to find the css variable --ev-card-selected-boder changed it to --ev-card-selected-border 
+
 
 ## 7. Test-suite audit
 
