@@ -16,7 +16,7 @@ function PlaygroundRoot() {
   const extraLayers = useMemo(() => [library.componentTokens], [library]);
   return (
     <ThemeProvider
-    key={library.id}
+      key={library.id}
       globalTokens={library.globalTokens}
       buildSemantic={library.buildSemantic}
       defaultPreset={library.defaultPreset}
