@@ -26,6 +26,11 @@ reorder [semantic, global, ...extraLayers] → [globalTokens, semantic, ...extra
 ```
 In codegen.ts, replaced the single-import-from-first-fixture's-module logic with grouping fixtures by their own module specifier; one import line per module.
 ```
+
+### Issue 4:
+```
+ Added key={library.id} to ThemeProvider at both roots so per-library persisted state reloads on switch.
+```
 ## 2. Evidence I used
 
 ### Issue 1:
@@ -41,7 +46,10 @@ In codegen.ts, replaced the single-import-from-first-fixture's-module logic with
 |src/composer/codegen.ts:170-175|All fixtures imported from first sorted name's module|
 |Volt seed (seed.ts:67-101) + emitters|Station detail uses SAMPLE_PRICE_BANDS + SAMPLE_TARIFF_NOTES via PricingTable notes:true|
 
-
+### Issue 4:
+```
+ThemeProvider.tsx:79-81 (state initializer runs once), main.tsx/composer main.tsx (key on children not provider), the persist effect writing old theme under the new key; acceptance criteria list in ISSUE.md.
+```
 ## 3. A suggestion I rejected or narrowed
 
 ### Issue 1:
@@ -55,6 +63,10 @@ Nothing because there was simple typo
 ### Issue 3:
 One-import-per-fixture (simplest code). Rejected because it changes output format for every screen and drifts from existing grouped-import expectations; instead kept single-module output byte-identical and only split when sources differ.
 
+### Issue 4:
+
+Handling reset inside ThemeProvider via a storageKey-watching effect — rejected because remounting is React's built-in mechanism, matches the existing ComposerApp key={library.id} pattern, and keeps the provider's API untouched; also rejected "share one global store" rewrite as restructuring.
+
 ## 4. Verification
 
 ### Issue 1:
@@ -66,6 +78,10 @@ npm run dev -> Components tab → Molecules → StationListCard
 
 ### Issue 3:
 npm test (+ new mixed-fixtures test); manual: composer.html → Station detail → Copy JSX → pasted into .tsx, compiles.
+
+
+### Issue 4:
+Manual flow both apps + npm test.
 
 ## 5. Remaining risk
 ### Issue 1:
@@ -91,6 +107,9 @@ Only Volt's FIXTURES map checked; atlas-web/atlas-charge packs have their own fi
 ### Issue 3:
 Initial instinct was to suspect the emitter or the import list; redirected to reading how imports are actually assembled at the bottom of puckDataToJsx — found the [fixtureNames[0]] shortcut.
 
+### Issue 4:
+Initial instinct was to look at localStorage logic in loadPersisted; redirected by noticing the persistence code was correct but never ran again — the question was "when does this component re-initialize?" which led to mount semantics.
+
 ## 7. Test-suite audit
 
 Answer the four questions in Part 2 of `TASK.md`.
@@ -100,7 +119,7 @@ Give a number and the method you used.
 
 **7b. Which tests would you not trust, and why?**
 
-**7c. Would the suite have caught each of the four bugs?** For each: yes or no,
-and what specifically let it through.
+**7c. Would the suite have caught each of the four bugs?**
+
 
 **7d. One day to make this suite honest — what do you change first?**
